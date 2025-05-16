@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   andera-base-worker:
     image: andera-top/base-worker
