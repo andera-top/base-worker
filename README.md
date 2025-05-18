@@ -22,12 +22,9 @@ Learn more: [Andera Documentation](https://andera.top/docs/)
 
 ---
 
-## Why use Base Worker?
+## Role of the Base Worker
 
-- **Technology-agnostic:** Use any language, tool, or runtime in your functions and services.
-- **Performance-first:** Designed for maximum throughput and low latency.
-- **Simplicity:** No manual configuration for functions, services, or tags. Just add your code and go.
-- **Cloud, VM, or bare metal:** Deploy anywhere, easily.
+The **Base Worker** can be used as a standalone component or as part of a cluster managed by the [Load Balancer](https://andera.top/docs/load-balancer/introduction). You can run and interact with your Workers directly for simple or single-instance use cases, or add an aditional Load Balancer. Duplicating the Base Worker to start building a Worker is the easiest way to start adding value!
 
 ---
 
@@ -54,37 +51,93 @@ Edit `.env` to set your keys and configuration.
 
 ## Configuration
 
-- All environment variables are documented in `.env.example`.
-- For advanced configuration, see the [Base Worker Configuration Guide](https://andera.top/docs/base-worker/configuration/).
+All configuration for the **Base Worker** is managed through the `.env` file. The file `src/config/index.ts` loads these variables and makes them available in your code.
+
+### Environment Variables
+
+Below are the main environment variables used by the **Base Worker**.
+
+| Variable              | Description                                                                                                    | Default                |
+|-----------------------|----------------------------------------------------------------------------------------------------------------|------------------------|
+| `AUTH_KEY`            | Authentication key required to access the Worker endpoints (except `/health` public info).                     | `default-auth-key`     |
+| `LB_AUTH_KEY`         | Key used to validate requests coming from the Load Balancer. Change only if you use it.                        | `default-lb-auth-key`  |
+| `PORT`                | HTTP port for the Worker API.                                                                                  | `3000`                 |
+| `WEBSOCKET_PORT`      | Port for the WebSocket server (for real-time slot updates with the Load Balancer ; change only if you use it). | `3001`                 |
+| `GROUP`               | The group this Worker belongs to (used for routing and contract versioning).                                   | `default`              |
+| `CONTRACT`            | The contract version implemented by this Worker.                                                               | `1`                    |
+| `SLOTS`               | Number of parallel tasks the Worker can handle.                                                                | `10`                   |
+| `DEFAULT_TIMEOUT`     | Default timeout (ms) for task execution.                                                                       | `30000`                |
+| `LOG_LEVEL`           | Log verbosity (`info`, `warn`, `error`, etc.).                                                                 | `info`                 |
+| `MAX_LOGS`            | Number of log lines to keep in memory (for `/logs`).                                                           | `1000`                 |
+| `WEBHOOK_TIMEOUT`     | Timeout (ms) for webhook calls.                                                                                | `5000`                 |
+| `WEBHOOK_MAX_RETRIES` | Number of times to retry a failed webhook.                                                                     | `3`                    |
+| `WEBHOOK_RETRY_DELAY` | Delay (ms) between webhook retries.                                                                            | `1000`                 |
+| `WEBHOOK_HEADERS`     | JSON object of headers to send with webhook requests.                                                          | `{}`                   |
+| `OPENAPI_ENABLED`     | Enable OpenAPI documentation endpoints (`/docs` and `/openapi`).                                               | `true`                 |
+
+### Usage
+
+- All configuration is loaded at startup and available via the `config` object in `src/config/index.ts`.
+- These variables control authentication, routing, logging, slot management, and advanced features.
+
+### Example `.env`
+
+```env
+AUTH_KEY=default-auth-key
+LB_AUTH_KEY=default-lb-auth-key
+PORT=3000
+WEBSOCKET_PORT=3001
+GROUP=default
+CONTRACT=1
+SLOTS=10
+DEFAULT_TIMEOUT=30000
+LOG_LEVEL=info
+MAX_LOGS=1000
+WEBHOOK_TIMEOUT=5000
+WEBHOOK_MAX_RETRIES=3
+WEBHOOK_RETRY_DELAY=1000
+WEBHOOK_HEADERS={}
+OPENAPI_ENABLED=true
+```
+
+For advanced configuration, see the [Base Worker Configuration Guide](https://andera.top/docs/base-worker/configuration/).
 
 ---
 
 ## Usage
 
-### Run in Development
+### Manual setup
+
+#### Run the application
 
 ```sh
 npm run dev
 ```
 
-### Build & Run in Production
+#### Build & Run in Production
 
 ```sh
 npm run build
 npm start
 ```
 
-### Run with Docker
+### Docker setup
 
 You should use Docker Compose to run the Base Worker for a robust and production-ready setup.
 
-### Build the Docker image
+#### Create a Docker network for Andera
+
+```sh
+docker network create andera-net
+```
+
+#### Build the Docker image
 
 ```sh
 docker-compose build
 ```
 
-### Run the stack
+#### Run the stack
 
 ```sh
 docker-compose up
@@ -147,8 +200,10 @@ Make sure your worker is running (default port: 3000):
 ```bash
 npm start
 ```
+
 Or, if using Docker:
 ```bash
+docker network create andera-net
 docker-compose build
 docker-compose up
 ```
@@ -157,6 +212,7 @@ Test the health endpoint:
 ```bash
 curl http://localhost:3000/health
 ```
+
 Expected response:
 ```json
 {
