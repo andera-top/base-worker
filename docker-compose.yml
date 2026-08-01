@@ -1,6 +1,7 @@
 services:
   andera-base-worker:
     image: andera-top/base-worker
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
