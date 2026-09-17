@@ -14,6 +14,7 @@ It enables you to build, run, and manage distributed workers for any kind of tas
 ## What is Andera?
 
 Andera is composed of three main components:
+
 - **Load Balancer:** Routes and prioritizes tasks, manages worker clusters, and provides a dashboard for monitoring.
 - **Base Worker:** A template project for building your own custom workers by adding business logic (functions, services, helpers, tags).
 - **Worker Core:** The core engine, included as a dependency, that handles all non-business logic for workers.
@@ -32,7 +33,7 @@ The **Base Worker** can be used as a standalone component or as part of a cluste
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [Node.js](https://nodejs.org/) (v18.14.1+; Docker uses Node 20)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
 
@@ -57,23 +58,23 @@ All configuration for the **Base Worker** is managed through the `.env` file. Th
 
 Below are the main environment variables used by the **Base Worker**.
 
-| Variable              | Description                                                                                                    | Default                |
-|-----------------------|----------------------------------------------------------------------------------------------------------------|------------------------|
-| `AUTH_KEY`            | Authentication key required to access the Worker endpoints (except `/health` public info).                     | `default-auth-key`     |
-| `LB_AUTH_KEY`         | Key used to validate requests coming from the Load Balancer. Change only if you use it.                        | `default-lb-auth-key`  |
-| `PORT`                | HTTP port for the Worker API.                                                                                  | `3000`                 |
-| `WEBSOCKET_PORT`      | Port for the WebSocket server (for real-time slot updates with the Load Balancer ; change only if you use it). | `3001`                 |
-| `GROUP`               | The group this Worker belongs to (used for routing and contract versioning).                                   | `default`              |
-| `CONTRACT`            | The contract version implemented by this Worker.                                                               | `1`                    |
-| `SLOTS`               | Number of parallel tasks the Worker can handle.                                                                | `10`                   |
-| `DEFAULT_TIMEOUT`     | Default timeout (ms) for task execution.                                                                       | `30000`                |
-| `LOG_LEVEL`           | Log verbosity (`info`, `warn`, `error`, etc.).                                                                 | `info`                 |
-| `MAX_LOGS`            | Number of log lines to keep in memory (for `/logs`).                                                           | `1000`                 |
-| `WEBHOOK_TIMEOUT`     | Timeout (ms) for webhook calls.                                                                                | `5000`                 |
-| `WEBHOOK_MAX_RETRIES` | Number of times to retry a failed webhook.                                                                     | `3`                    |
-| `WEBHOOK_RETRY_DELAY` | Delay (ms) between webhook retries.                                                                            | `1000`                 |
-| `WEBHOOK_HEADERS`     | JSON object of headers to send with webhook requests.                                                          | `{}`                   |
-| `OPENAPI_ENABLED`     | Enable OpenAPI documentation endpoints (`/docs` and `/openapi`).                                               | `true`                 |
+| Variable              | Description                                                                                                    | Default   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- | --------- |
+| `AUTH_KEY`            | Authentication key required to access the Worker endpoints (except `/health` public info).                     | Required  |
+| `LB_AUTH_KEY`         | Key used to validate requests coming from the Load Balancer. Change only if you use it.                        | Required  |
+| `PORT`                | HTTP port for the Worker API.                                                                                  | `3000`    |
+| `WEBSOCKET_PORT`      | Port for the WebSocket server (for real-time slot updates with the Load Balancer ; change only if you use it). | `3001`    |
+| `GROUP`               | The group this Worker belongs to (used for routing and contract versioning).                                   | `default` |
+| `CONTRACT`            | The contract version implemented by this Worker.                                                               | `1`       |
+| `SLOTS`               | Number of parallel tasks the Worker can handle.                                                                | `10`      |
+| `DEFAULT_TIMEOUT`     | Default timeout (ms) for task execution.                                                                       | `30000`   |
+| `LOG_LEVEL`           | Log verbosity (`info`, `warn`, `error`, etc.).                                                                 | `info`    |
+| `MAX_LOGS`            | Number of log lines to keep in memory (for `/logs`).                                                           | `1000`    |
+| `WEBHOOK_TIMEOUT`     | Timeout (ms) for webhook calls.                                                                                | `5000`    |
+| `WEBHOOK_MAX_RETRIES` | Number of times to retry a failed webhook.                                                                     | `3`       |
+| `WEBHOOK_RETRY_DELAY` | Delay (ms) between webhook retries.                                                                            | `1000`    |
+| `WEBHOOK_HEADERS`     | JSON object of headers to send with webhook requests.                                                          | `{}`      |
+| `OPENAPI_ENABLED`     | Enable OpenAPI documentation endpoints (`/docs` and `/openapi`).                                               | `false`   |
 
 ### Usage
 
@@ -83,8 +84,8 @@ Below are the main environment variables used by the **Base Worker**.
 ### Example `.env`
 
 ```env
-AUTH_KEY=default-auth-key
-LB_AUTH_KEY=default-lb-auth-key
+AUTH_KEY=<distinct-random-key>
+LB_AUTH_KEY=<distinct-random-key>
 PORT=3000
 WEBSOCKET_PORT=3001
 GROUP=default
@@ -165,11 +166,11 @@ import { defineFunction } from '@andera-top/worker-core'
 
 export const hello = defineFunction({
   params: {
-    name: { type: 'string', required: false, default: 'World' }
+    name: { type: 'string', required: false, default: 'World' },
   },
-  handler: async (params) => {
+  handler: async params => {
     return { message: `Hello ${params.name}!` }
-  }
+  },
 })
 ```
 
@@ -202,6 +203,7 @@ npm start
 ```
 
 Or, if using Docker:
+
 ```bash
 docker network create andera-net
 docker-compose build
@@ -209,11 +211,13 @@ docker-compose up
 ```
 
 Test the health endpoint:
+
 ```bash
 curl http://localhost:3000/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ready"
@@ -223,6 +227,7 @@ Expected response:
 ### 2. Test a Function
 
 Call a function (e.g., `hello`) using the `/task` endpoint:
+
 ```bash
 curl -X POST http://localhost:3000/task \
   -H "Content-Type: application/json" \
@@ -232,7 +237,9 @@ curl -X POST http://localhost:3000/task \
     "contract": 1
   }'
 ```
+
 Expected response:
+
 ```json
 {
   "success": true,
@@ -270,3 +277,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository guidelines, and [How to Co
 ## License
 
 For license details, see the [LICENSE](LICENSE) file.
+
+## Native MCP
+
+After installing the Worker Core release containing native MCP, set a distinct `MCP_AUTH_KEY` in `.env` and copy `mcp.example.json` to `mcp.json`. Connect agents to `/mcp` with that single bearer token. The file selects local functions and reloads live; no configuration means MCP stays disabled.
+
+For Docker, create `.mcp/mcp.json` from the example and use `docker compose -f docker-compose.yml -f docker-compose.mcp.yml up --build`. The read-only directory mount supports atomic edits. Environment-secret changes require a restart.
+
+See [MCP setup and client compatibility](https://andera.top/docs/base-worker/mcp). During local development before npm publication, install the sibling Worker Core tarball as described in its implementation plan.

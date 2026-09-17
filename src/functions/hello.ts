@@ -2,8 +2,9 @@ import { defineFunction } from '@andera-top/worker-core'
 import { log } from '@andera-top/worker-core/dist/utils/logger'
 
 export const hello = defineFunction({
+  description: 'Return a greeting for the given name.',
   params: {
-    name: { type: 'string', required: false, default: 'World' },
+    name: { type: 'string', description: 'The person to greet.', required: false, default: 'World' },
   },
   config: {
     timeout: 5000,

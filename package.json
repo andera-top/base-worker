@@ -1,6 +1,6 @@
 {
   "name": "@andera-top/base-worker",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -9,14 +9,17 @@
     "clean": "rm -rf dist",
     "dev": "ts-node src/app.ts",
     "start": "node dist/app.js",
-    "lint": "prettier --write --check \"**/*.{ts,tsx}\""
+    "lint": "prettier --check \"**/*.{ts,tsx}\""
   },
   "files": [
     "dist"
   ],
   "license": "Elastic License 2.0",
+  "engines": {
+    "node": ">=18.14.1"
+  },
   "dependencies": {
-    "@andera-top/worker-core": "^0.1.4",
+    "@andera-top/worker-core": "^0.1.6",
     "dotenv": "^16.5.0"
   },
   "devDependencies": {
