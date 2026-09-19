@@ -4,7 +4,7 @@
 
 # Andera Base Worker
 
-**Andera** is a high-performance, open-source Task Orchestration Platform (TOP) designed for simplicity, flexibility, and scalability.  
+**Andera** is a high-performance, source-available Task Orchestration Platform (TOP) designed for simplicity, flexibility, and scalability.
 It enables you to build, run, and manage distributed workers for any kind of task, from AI agents to automation scripts.
 
 > **Note:** This repository is a template. You should customize this README and the codebase for your own worker project.
@@ -33,7 +33,7 @@ The **Base Worker** can be used as a standalone component or as part of a cluste
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18.14.1+; Docker uses Node 20)
+- [Node.js](https://nodejs.org/) (Node 24 LTS recommended; runtime minimum 18.14.1; Docker uses Node 24)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 - [Docker](https://www.docker.com/) (optional, for containerized deployment)
 
@@ -269,14 +269,14 @@ For more details, see the [Testing Guide](https://andera.top/docs/base-worker/te
 
 ## Contributing
 
-Andera is open source and community-driven!
+Andera makes its source available and welcomes community contributions.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for repository guidelines, and [How to Contribute](https://andera.top/docs/contribute) for the project's philosophy and license.
 
 ---
 
 ## License
 
-For license details, see the [LICENSE](LICENSE) file.
+For license details, see the [LICENCE](LICENCE) file.
 
 ## Native MCP
 
