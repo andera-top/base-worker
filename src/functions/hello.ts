@@ -12,6 +12,7 @@ export const hello = defineFunction({
     supportsStreaming: true,
   },
   handler: async (params, context) => {
+    context?.signal.throwIfAborted()
     log('[HELLO]', `Hello function called for ${params.name} at ${new Date().toISOString()}`)
 
     if (context?.stream) {
