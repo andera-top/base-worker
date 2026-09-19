@@ -4,10 +4,20 @@
 
 # Andera Base Worker
 
-**Andera** is a high-performance, source-available Task Orchestration Platform (TOP) designed for simplicity, flexibility, and scalability.
+**Andera** is a source-available platform for exposing business functions as REST APIs and MCP tools for AI agents. Run a Worker directly or use the Load Balancer to route tasks across Workers; agents connect through one `/mcp` endpoint and one dedicated token.
 It enables you to build, run, and manage distributed workers for any kind of task, from AI agents to automation scripts.
 
 > **Note:** This repository is a template. You should customize this README and the codebase for your own worker project.
+
+---
+
+## Native MCP
+
+Worker Core 0.1.6 or later provides native MCP. After installing that release, set a distinct `MCP_AUTH_KEY` in `.env` and copy `mcp.example.json` to `mcp.json`. Connect agents to `/mcp` with that single bearer token. The example exposes only `hello`. Omit `functions` (use `{}`) for all local functions, or set `functions: []` for none. Selection reloads live; no configuration or token means MCP stays disabled. Invalid edits retain the last valid configuration; deleting the file disables new access. The LB can expose this Worker through REST without enabling MCP here.
+
+For Docker, run `mkdir -p .mcp` and copy the example to `.mcp/mcp.json`, then use `docker compose -f docker-compose.yml -f docker-compose.mcp.yml up --build`. The read-only directory mount supports atomic edits. Environment-secret changes require a restart.
+
+See [MCP setup and client compatibility](https://andera.top/docs/base-worker/mcp). During local development before npm publication, install the sibling Worker Core tarball as described in its implementation plan.
 
 ---
 
@@ -15,7 +25,7 @@ It enables you to build, run, and manage distributed workers for any kind of tas
 
 Andera is composed of three main components:
 
-- **Load Balancer:** Routes and prioritizes tasks, manages worker clusters, and provides a dashboard for monitoring.
+- **Load Balancer:** Routes tasks, monitors Workers, and exposes functions across groups/contracts through one MCP endpoint.
 - **Base Worker:** A template project for building your own custom workers by adding business logic (functions, services, helpers, tags).
 - **Worker Core:** The core engine, included as a dependency, that handles all non-business logic for workers.
 
@@ -25,7 +35,7 @@ Learn more: [Andera Documentation](https://andera.top/docs/)
 
 ## Role of the Base Worker
 
-The **Base Worker** can be used as a standalone component or as part of a cluster managed by the [Load Balancer](https://andera.top/docs/load-balancer/introduction). You can run and interact with your Workers directly for simple or single-instance use cases, or add an aditional Load Balancer. Duplicating the Base Worker to start building a Worker is the easiest way to start adding value!
+The **Base Worker** can be used as a standalone component or as part of a cluster managed by the [Load Balancer](https://andera.top/docs/load-balancer/introduction). You can run and interact with your Workers directly for simple or single-instance use cases, or add a Load Balancer. Duplicating the Base Worker to start building a Worker is the easiest way to start adding value!
 
 ---
 
@@ -52,7 +62,7 @@ Edit `.env` to set your keys and configuration.
 
 ## Configuration
 
-All configuration for the **Base Worker** is managed through the `.env` file. The file `src/config/index.ts` loads these variables and makes them available in your code.
+Runtime settings and secrets come from environment variables, loaded from `.env` at startup. `src/config/index.ts` extends Worker Core configuration. MCP function selection lives separately in `mcp.json` and reloads without restarting.
 
 ### Environment Variables
 
@@ -60,11 +70,11 @@ Below are the main environment variables used by the **Base Worker**.
 
 | Variable              | Description                                                                                                    | Default   |
 | --------------------- | -------------------------------------------------------------------------------------------------------------- | --------- |
-| `AUTH_KEY`            | Authentication key required to access the Worker endpoints (except `/health` public info).                     | Required  |
-| `LB_AUTH_KEY`         | Key used to validate requests coming from the Load Balancer. Change only if you use it.                        | Required  |
+| `AUTH_KEY`            | Key for REST tasks and administration; MCP uses its own token.                     | Required  |
+| `LB_AUTH_KEY`         | Internal LB key; required even standalone and distinct from AUTH_KEY.                        | Required  |
 | `PORT`                | HTTP port for the Worker API.                                                                                  | `3000`    |
 | `WEBSOCKET_PORT`      | Port for the WebSocket server (for real-time slot updates with the Load Balancer ; change only if you use it). | `3001`    |
-| `GROUP`               | The group this Worker belongs to (used for routing and contract versioning).                                   | `default` |
+| `GROUP` | Worker group for routing; the example sets `default`. | Required |
 | `CONTRACT`            | The contract version implemented by this Worker.                                                               | `1`       |
 | `SLOTS`               | Number of parallel tasks the Worker can handle.                                                                | `10`      |
 | `DEFAULT_TIMEOUT`     | Default timeout (ms) for task execution.                                                                       | `30000`   |
@@ -75,10 +85,14 @@ Below are the main environment variables used by the **Base Worker**.
 | `WEBHOOK_RETRY_DELAY` | Delay (ms) between webhook retries.                                                                            | `1000`    |
 | `WEBHOOK_HEADERS`     | JSON object of headers to send with webhook requests.                                                          | `{}`      |
 | `OPENAPI_ENABLED`     | Enable OpenAPI documentation endpoints (`/docs` and `/openapi`).                                               | `false`   |
+| `REQUEST_BODY_LIMIT` | REST task request body limit; MCP has a separate fixed 1 MiB limit. | `10mb` |
+| `MCP_AUTH_KEY` | Dedicated bearer token distinct from both internal keys. | Empty: disabled |
+| `MCP_CONFIG_PATH` | Path relative to the application root, or absolute. | `mcp.json` |
+| `MCP_ALLOWED_ORIGINS` | Comma-separated exact browser origins; native clients need none. | Empty |
 
 ### Usage
 
-- All configuration is loaded at startup and available via the `config` object in `src/config/index.ts`.
+- Environment settings are loaded at startup; restart after changing them.
 - These variables control authentication, routing, logging, slot management, and advanced features.
 
 ### Example `.env`
@@ -135,18 +149,18 @@ docker network create andera-net
 #### Build the Docker image
 
 ```sh
-docker-compose build
+docker compose build
 ```
 
 #### Run the stack
 
 ```sh
-docker-compose up
+docker compose up
 ```
 
-This will start the Base Worker with all environment variables from your `.env` file.
+Compose passes the variables declared in `docker-compose.yml`. Include the MCP override above to load MCP settings and mount its configuration.
 
-> **Do not use `docker run` directly.** The recommended way is to use `docker-compose up` to ensure all dependencies and configuration are handled correctly.
+> **Do not use `docker run` directly.** The recommended way is to use `docker compose up` to ensure all dependencies and configuration are handled correctly.
 
 The image is named `andera-top/base-worker` by default.
 
@@ -165,8 +179,9 @@ The image is named `andera-top/base-worker` by default.
 import { defineFunction } from '@andera-top/worker-core'
 
 export const hello = defineFunction({
+  description: 'Return a greeting for the given name.',
   params: {
-    name: { type: 'string', required: false, default: 'World' },
+    name: { description: 'The person to greet.', type: 'string', required: false, default: 'World' },
   },
   handler: async params => {
     return { message: `Hello ${params.name}!` }
@@ -180,12 +195,13 @@ See more examples in the [Functions documentation](https://andera.top/docs/base-
 
 ## Endpoints
 
+- `POST /mcp` — Optional MCP discovery and tool calls with `MCP_AUTH_KEY`
 - `POST /task` — Receives tasks for execution
 - `GET /health` — Public status info; more details with authentication
-- `GET /logs` — Last 1000 log lines (authentication required)
+- `GET /logs` — Recent log lines, bounded by `MAX_LOGS` (authentication required)
 - `POST /on` and `/off` — Enable/disable task acceptance
 
-All endpoints return gzipped data. Logs are managed natively.  
+HTTP compression is negotiated when supported. Logs are managed natively.
 See [API Reference](https://andera.top/docs/base-worker/usage/) for details.
 
 ---
@@ -199,6 +215,7 @@ After installation and configuration, you can test your worker as follows:
 Make sure your worker is running (default port: 3000):
 
 ```bash
+npm run build
 npm start
 ```
 
@@ -206,8 +223,8 @@ Or, if using Docker:
 
 ```bash
 docker network create andera-net
-docker-compose build
-docker-compose up
+docker compose build
+docker compose up
 ```
 
 Test the health endpoint:
@@ -231,6 +248,7 @@ Call a function (e.g., `hello`) using the `/task` endpoint:
 ```bash
 curl -X POST http://localhost:3000/task \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <AUTH_KEY>" \
   -d '{
     "function": "hello",
     "input": { "name": "Andera" },
@@ -277,11 +295,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository guidelines, and [How to Co
 ## License
 
 For license details, see the [LICENCE](LICENCE) file.
-
-## Native MCP
-
-After installing the Worker Core release containing native MCP, set a distinct `MCP_AUTH_KEY` in `.env` and copy `mcp.example.json` to `mcp.json`. Connect agents to `/mcp` with that single bearer token. The file selects local functions and reloads live; no configuration means MCP stays disabled.
-
-For Docker, create `.mcp/mcp.json` from the example and use `docker compose -f docker-compose.yml -f docker-compose.mcp.yml up --build`. The read-only directory mount supports atomic edits. Environment-secret changes require a restart.
-
-See [MCP setup and client compatibility](https://andera.top/docs/base-worker/mcp). During local development before npm publication, install the sibling Worker Core tarball as described in its implementation plan.
