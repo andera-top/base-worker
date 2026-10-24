@@ -12,7 +12,7 @@ export const hello = defineFunction({
     supportsStreaming: true,
   },
   handler: async (params, context) => {
-    context?.signal.throwIfAborted()
+    // Pass context?.signal to async work, e.g. fetch(url, { signal: context?.signal }), so a timeout cancels it.
     log('[HELLO]', `Hello function called for ${params.name} at ${new Date().toISOString()}`)
 
     if (context?.stream) {

@@ -9,7 +9,8 @@
     "clean": "rm -rf dist",
     "dev": "ts-node src/app.ts",
     "start": "node dist/app.js",
-    "lint": "prettier --check \"**/*.{ts,tsx}\""
+    "lint": "prettier --check \"**/*.{ts,tsx}\"",
+    "format": "prettier --write \"**/*.{ts,tsx}\""
   },
   "files": [
     "dist"

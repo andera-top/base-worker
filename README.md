@@ -17,7 +17,7 @@ Worker Core 0.1.6 or later provides native MCP. After installing that release, s
 
 For Docker, run `mkdir -p .mcp` and copy the example to `.mcp/mcp.json`, then use `docker compose -f docker-compose.yml -f docker-compose.mcp.yml up --build`. The read-only directory mount supports atomic edits. Environment-secret changes require a restart.
 
-See [MCP setup and client compatibility](https://andera.top/docs/base-worker/mcp). During local development before npm publication, install the sibling Worker Core tarball as described in its implementation plan.
+See [MCP setup and client compatibility](https://andera.top/docs/base-worker/mcp). During local development before npm publication, install the sibling Worker Core tarball as described in its [implementation plan](https://github.com/andera-top/worker-core/blob/main/MCP_IMPLEMENTATION_PLAN.md#release-order-and-local-development); a Docker build needs the published package.
 
 ---
 
@@ -71,24 +71,25 @@ Below are the main environment variables used by the **Base Worker**.
 | Variable              | Description                                                                                                    | Default   |
 | --------------------- | -------------------------------------------------------------------------------------------------------------- | --------- |
 | `AUTH_KEY`            | Key for REST tasks and administration; MCP uses its own token.                     | Required  |
-| `LB_AUTH_KEY`         | Internal LB key; required even standalone and distinct from AUTH_KEY.                        | Required  |
+| `LB_AUTH_KEY`         | Internal LB key; required even standalone, distinct from AUTH_KEY and identical to the Load Balancer's `LB_AUTH_KEY`. | Required  |
 | `PORT`                | HTTP port for the Worker API.                                                                                  | `3000`    |
 | `WEBSOCKET_PORT`      | Port for the WebSocket server (for real-time slot updates with the Load Balancer ; change only if you use it). | `3001`    |
 | `GROUP` | Worker group for routing; the example sets `default`. | Required |
 | `CONTRACT`            | The contract version implemented by this Worker.                                                               | `1`       |
 | `SLOTS`               | Number of parallel tasks the Worker can handle.                                                                | `10`      |
 | `DEFAULT_TIMEOUT`     | Default timeout (ms) for task execution.                                                                       | `30000`   |
-| `LOG_LEVEL`           | Log verbosity (`info`, `warn`, `error`, etc.).                                                                 | `info`    |
+| `LOG_LEVEL`           | Log verbosity: `debug`, `info`, `warn` or `error`.                                                             | `info`    |
 | `MAX_LOGS`            | Number of log lines to keep in memory (for `/logs`).                                                           | `1000`    |
 | `WEBHOOK_TIMEOUT`     | Timeout (ms) for webhook calls.                                                                                | `5000`    |
 | `WEBHOOK_MAX_RETRIES` | Number of times to retry a failed webhook.                                                                     | `3`       |
 | `WEBHOOK_RETRY_DELAY` | Delay (ms) between webhook retries.                                                                            | `1000`    |
 | `WEBHOOK_HEADERS`     | JSON object of headers to send with webhook requests.                                                          | `{}`      |
-| `OPENAPI_ENABLED`     | Enable OpenAPI documentation endpoints (`/docs` and `/openapi`).                                               | `false`   |
+| `OPENAPI_ENABLED`     | Enable OpenAPI documentation endpoints (`/docs` and `/openapi`, unauthenticated).                              | `false`   |
 | `REQUEST_BODY_LIMIT` | REST task request body limit; MCP has a separate fixed 1 MiB limit. | `10mb` |
-| `MCP_AUTH_KEY` | Dedicated bearer token distinct from both internal keys. | Empty: disabled |
+| `MCP_AUTH_KEY` | Dedicated bearer token without whitespace, distinct from both internal keys; otherwise MCP stays disabled. | Empty: disabled |
 | `MCP_CONFIG_PATH` | Path relative to the application root, or absolute. | `mcp.json` |
 | `MCP_ALLOWED_ORIGINS` | Comma-separated exact browser origins; native clients need none. | Empty |
+| `CUSTOM_CONFIG` | Example Worker-specific setting (see `src/config/index.ts`). | `default-value` |
 
 ### Usage
 
@@ -99,7 +100,7 @@ Below are the main environment variables used by the **Base Worker**.
 
 ```env
 AUTH_KEY=<distinct-random-key>
-LB_AUTH_KEY=<distinct-random-key>
+LB_AUTH_KEY=<same-value-as-the-load-balancer>
 PORT=3000
 WEBSOCKET_PORT=3001
 GROUP=default
@@ -112,7 +113,12 @@ WEBHOOK_TIMEOUT=5000
 WEBHOOK_MAX_RETRIES=3
 WEBHOOK_RETRY_DELAY=1000
 WEBHOOK_HEADERS={}
-OPENAPI_ENABLED=true
+OPENAPI_ENABLED=false
+REQUEST_BODY_LIMIT=10mb
+CUSTOM_CONFIG=default-value
+MCP_AUTH_KEY=
+MCP_CONFIG_PATH=mcp.json
+MCP_ALLOWED_ORIGINS=
 ```
 
 For advanced configuration, see the [Base Worker Configuration Guide](https://andera.top/docs/base-worker/configuration/).
@@ -162,7 +168,7 @@ Compose passes the variables declared in `docker-compose.yml`. Include the MCP o
 
 > **Do not use `docker run` directly.** The recommended way is to use `docker compose up` to ensure all dependencies and configuration are handled correctly.
 
-The image is named `andera-top/base-worker` by default.
+The image is named `andera-top/base-worker` by default. On the `andera-net` network, add the Worker to the Load Balancer's `workers.json` as `http://andera-base-worker:3000` (the Compose service name); only the API port is published on the host, and the LB also needs the WebSocket port, reachable over the network.
 
 ---
 

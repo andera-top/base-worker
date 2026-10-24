@@ -23,7 +23,7 @@ Andera makes its source available and welcomes community contributions. We value
 1. **Fork the repository** and create a feature branch.
 2. **Install dependencies** and set up your environment.
 3. **Make your changes** (one feature or fix per PR).
-4. **Run `npm run lint`** to check code formatting.
+4. **Run `npm run lint`** to check code formatting (`npm run format` fixes it).
 5. **Test your changes** locally.
 6. **Submit a Pull Request** with a clear description.
 
@@ -42,7 +42,7 @@ Andera makes its source available and welcomes community contributions. We value
 
 - Use 2 spaces for indentation.
 - No semicolons, use single quotes.
-- Run `npm run lint` before committing (Prettier checks formatting without changing files).
+- Run `npm run lint` before committing (Prettier checks formatting without changing files); `npm run format` applies it.
 
 ---
 
