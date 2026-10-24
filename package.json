@@ -16,7 +16,7 @@
   ],
   "license": "Elastic License 2.0",
   "engines": {
-    "node": ">=18.14.1"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
   },
   "dependencies": {
     "@andera-top/worker-core": "^0.1.6",
