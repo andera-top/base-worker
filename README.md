@@ -11,16 +11,6 @@ It enables you to build, run, and manage distributed workers for any kind of tas
 
 ---
 
-## Native MCP
-
-Worker Core 0.1.6 or later provides native MCP. After installing that release, set a distinct `MCP_AUTH_KEY` in `.env` and copy `mcp.example.json` to `mcp.json`. Connect agents to `/mcp` with that single bearer token. The example exposes only `hello`. Omit `functions` (use `{}`) for all local functions, or set `functions: []` for none. Selection reloads live; no configuration or token means MCP stays disabled. Invalid edits retain the last valid configuration; deleting the file disables new access. The LB can expose this Worker through REST without enabling MCP here.
-
-For Docker, run `mkdir -p .mcp` and copy the example to `.mcp/mcp.json`, then use `docker compose -f docker-compose.yml -f docker-compose.mcp.yml up --build`. The read-only directory mount supports atomic edits. Environment-secret changes require a restart.
-
-See [MCP setup and client compatibility](https://andera.top/docs/base-worker/mcp). During local development before npm publication, install the sibling Worker Core tarball as described in its [implementation plan](https://github.com/andera-top/worker-core/blob/main/MCP_IMPLEMENTATION_PLAN.md#release-order-and-local-development); a Docker build needs the published package.
-
----
-
 ## What is Andera?
 
 Andera is composed of three main components:
@@ -36,6 +26,24 @@ Learn more: [Andera Documentation](https://andera.top/docs/)
 ## Role of the Base Worker
 
 The **Base Worker** can be used as a standalone component or as part of a cluster managed by the [Load Balancer](https://andera.top/docs/load-balancer/introduction). You can run and interact with your Workers directly for simple or single-instance use cases, or add a Load Balancer. Duplicating the Base Worker to start building a Worker is the easiest way to start adding value!
+
+---
+
+## Native MCP
+
+The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is the standard way for AI agents such as Claude, Cursor or VS Code to discover and call tools. This Worker can expose its functions as MCP tools at `/mcp`: agents connect with one URL and one bearer token, and their calls go through the same validation, queue and slots as REST requests.
+
+To enable it:
+
+1. Set `MCP_AUTH_KEY` in `.env` to a dedicated random token (for example `openssl rand -hex 32`), different from `AUTH_KEY` and `LB_AUTH_KEY`.
+2. Copy `mcp.example.json` to `mcp.json` and list the functions to expose. The example exposes only `hello`; `{}` exposes every function and `{"functions": []}` none.
+3. Point your agent at `http://<host>:3000/mcp` with the header `Authorization: Bearer <MCP_AUTH_KEY>`.
+
+With Docker, run `mkdir -p .mcp`, copy the example to `.mcp/mcp.json`, and start with `docker compose -f docker-compose.yml -f docker-compose.mcp.yml up --build`.
+
+`mcp.json` reloads without a restart: invalid edits keep the last valid selection, and deleting the file disables MCP. Changing `MCP_AUTH_KEY` requires a restart. Without the token or the file, MCP stays off. A Load Balancer does not need this endpoint: it routes tasks through REST and can expose this Worker's functions through its own `/mcp`.
+
+Setup and client configuration: [Worker MCP documentation](https://andera.top/docs/base-worker/mcp).
 
 ---
 
