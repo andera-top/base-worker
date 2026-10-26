@@ -28,6 +28,18 @@ The **Base Worker** can be used as a standalone component or as part of a cluste
 
 ---
 
+## Features
+
+- Functions called through `POST /task`, in synchronous, streaming or webhook mode
+- Parameter validation, timeouts with cooperative cancellation, and retries
+- Parallel slots with a prioritized queue
+- Services with lifecycle management and automatic restart
+- Tags and logs for monitoring, and optional Load Balancer integration
+- Optional OpenAPI documentation
+- Optional MCP endpoint, so AI agents can call your functions as tools (see [MCP](#mcp-optional))
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -198,11 +210,11 @@ See more examples in the [Functions documentation](https://andera.top/docs/base-
 
 ## Endpoints
 
-- `POST /mcp` — Optional MCP discovery and tool calls with `MCP_AUTH_KEY`
 - `POST /task` — Receives tasks for execution
 - `GET /health` — Public status info; more details with authentication
 - `GET /logs` — Recent log lines, bounded by `MAX_LOGS` (authentication required)
 - `POST /on` and `/off` — Enable/disable task acceptance
+- `POST /mcp` — Optional MCP discovery and tool calls with `MCP_AUTH_KEY`
 
 HTTP compression is negotiated when supported. Logs are managed natively.
 See [API Reference](https://andera.top/docs/base-worker/usage/) for details.
