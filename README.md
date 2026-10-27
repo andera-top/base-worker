@@ -86,7 +86,7 @@ Below are the main environment variables used by the **Base Worker**.
 | `WEBHOOK_RETRY_DELAY` | Delay (ms) between webhook retries.                                                                            | `1000`    |
 | `WEBHOOK_HEADERS`     | JSON object of headers to send with webhook requests.                                                          | `{}`      |
 | `OPENAPI_ENABLED`     | Enable OpenAPI documentation endpoints (`/docs` and `/openapi`, unauthenticated).                              | `false`   |
-| `REQUEST_BODY_LIMIT` | REST task request body limit; MCP has a separate fixed 1 MiB limit. | `10mb` |
+| `REQUEST_BODY_LIMIT` | REST task request body limit; MCP has a separate fixed 1MiB limit. | `10mb` |
 | `MCP_AUTH_KEY` | Dedicated bearer token without whitespace, distinct from both internal keys; otherwise MCP stays disabled. | Empty: disabled |
 | `MCP_CONFIG_PATH` | Path relative to the application root, or absolute. | `mcp.json` |
 | `MCP_ALLOWED_ORIGINS` | Comma-separated exact browser origins; native clients need none. | Empty |
